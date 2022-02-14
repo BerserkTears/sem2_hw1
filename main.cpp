@@ -1,5 +1,5 @@
 #include <iostream>
-#include "vector"
+#include <vector>
 #include <cmath>
 
 using namespace std;
@@ -36,7 +36,7 @@ public:
 };
 
 // Ломаная линия
-class polyline : public dot{
+class polyline {
 protected:
     int amount_of_dots;
     dot dots[1024];
@@ -114,7 +114,7 @@ public:
     }
 };
 
-//многоугольник
+// Многоугольник
 class polygon : public closed_polyline {
 public:
     polygon() {
@@ -157,7 +157,181 @@ public:
     }
 };
 
-int main(){
+// Треугольник
+class triangle : public polygon {
+public:
+    triangle() {
+        amount_of_dots = 0;
+    }
+
+    triangle(dot input_dots[]) {
+        amount_of_dots = 3;
+        dots[0] = input_dots[0];
+        dots[1] = input_dots[1];
+        dots[2] = input_dots[2];
+    }
+
+    triangle(triangle &copy) {
+        amount_of_dots = copy.amount_of_dots;
+        dots[0] = copy.dots[0];
+        dots[1] = copy.dots[1];
+        dots[2] = copy.dots[2];
+    }
+
+    triangle &operator=(triangle &copy) {
+        amount_of_dots = copy.amount_of_dots;
+        dots[0] = copy.dots[0];
+        dots[1] = copy.dots[1];
+        dots[2] = copy.dots[2];
+        return *this;
+    }
+};
+
+class trapezoid : public polygon {
+public:
+    trapezoid() {
+        amount_of_dots = 0;
+    }
+
+    trapezoid(dot input_dots[]) {
+        amount_of_dots = 4;
+        for (int i = 0; i < 4; ++i) {
+            dots[i] = input_dots[i];
+        }
+    }
+
+    trapezoid(trapezoid &copy) {
+        amount_of_dots = copy.amount_of_dots;
+        for (int i = 0; i < 4; ++i) {
+            dots[i] = copy.dots[i];
+        }
+    }
+
+    trapezoid &operator=(trapezoid &copy) {
+        amount_of_dots = copy.amount_of_dots;
+        for (int i = 0; i < 4; ++i) {
+            dots[i] = copy.dots[i];
+        }
+        return *this;
+    }
+};
+
+// Правильный многоугольник
+class regular_polygon : public polygon {
+};
+
+// Полином
+class polynomial {
+private:
+    vector<int> coefficients;
+    static string indeterminate(unsigned long power) {
+        switch (power) {
+            case (0):
+                return "";
+            case (1):
+                return "x";
+            default:
+                return "x^" + to_string(power);
+        }
+    }
+    static char sign(int number) {
+        if (number < 0) return '-';
+        return '+';
+    }
+
+public:
+    polynomial() {
+        coefficients.push_back(0);
+    }
+
+    polynomial(const vector<int> &input_coefficients) {
+        for (int input_coefficient: input_coefficients) {
+            coefficients.push_back(input_coefficient);
+        }
+    }
+
+    polynomial &operator=(const polynomial &copy) {
+        coefficients = copy.coefficients;
+        return *this;
+    }
+
+    ~polynomial() = default;
+
+    bool operator==(polynomial &pol) {
+        return coefficients == pol.coefficients;
+    }
+
+    bool operator!=(polynomial &pol) {
+        return !(coefficients == pol.coefficients);
+    }
+
+    polynomial &operator+(const polynomial &pol) {
+        for (int i = 0; i < pol.coefficients.size(); ++i) {
+            if (i > coefficients.size() - 1) {
+                coefficients.push_back(pol.coefficients[i]);
+            } else {
+                coefficients[i] += pol.coefficients[i];
+            }
+        }
+        while (coefficients[coefficients.size() - 1] == 0){
+            coefficients.pop_back();
+        }
+        return *this;
+    }
+
+    polynomial &operator+=(const polynomial &pol) {
+        for (int i = 0; i < pol.coefficients.size(); ++i) {
+            if (i > coefficients.size() - 1) {
+                coefficients.push_back(pol.coefficients[i]);
+            } else {
+                coefficients[i] += pol.coefficients[i];
+            }
+        }
+        while (coefficients[coefficients.size() -1] == 0){
+            coefficients.pop_back();
+        }
+        return *this;
+    }
+
+    polynomial &operator-(const polynomial &pol) {
+        for (int i = 0; i < pol.coefficients.size(); ++i) {
+            if (i > coefficients.size() - 1) {
+                coefficients.push_back(-pol.coefficients[i]);
+            } else {
+                coefficients[i] -= pol.coefficients[i];
+            }
+        }
+        while (coefficients[coefficients.size() - 1] == 0){
+            coefficients.pop_back();
+        }
+        return *this;
+    }
+
+    polynomial &operator-=(const polynomial &pol) {
+        for (int i = 0; i < pol.coefficients.size(); ++i) {
+            if (i > coefficients.size() - 1) {
+                coefficients.push_back(-pol.coefficients[i]);
+            } else {
+                coefficients[i] -= pol.coefficients[i];
+            }
+        }
+        while (coefficients[coefficients.size() - 1] == 0){
+            coefficients.pop_back();
+        }
+        return *this;
+    }
+
+    void print() {
+        cout << coefficients[coefficients.size() - 1] << indeterminate(coefficients.size() - 1);
+        for (int i = (int) coefficients.size() - 2; i >= 0; --i) {
+            if (coefficients[i] != 0) {
+                cout << sign(coefficients[i]) << abs(coefficients[i]) << indeterminate(i);
+            }
+        }
+    }
+};
+
+int main() {
     dot d1, d2 = {1, 2};
     d1.print();
     d2.print();
@@ -178,6 +352,23 @@ int main(){
     cout << cpl2.perimeter() << endl;
     polygon pol1 = {4, d};
     cout << pol1.perimeter() << " " << pol1.area() << endl;
-
+    triangle t1(d);
+    cout << t1.area() << endl;
+    regular_polygon rp1;
+    vector<int> vec, vec2;
+    vec.push_back(1);
+    vec.push_back(-2);
+    vec.push_back(-3);
+    vec2.push_back(3);
+    vec2.push_back(-5);
+    polynomial poly1(vec), poly2(vec2);
+    poly1.print();
+    poly2 += poly1;
+    cout << endl;
+    poly2.print();
+    poly2 -= poly1;
+    cout << endl;
+    poly2.print();
+    cout << endl << (poly2 == poly1);
     return 0;
 }
