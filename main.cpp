@@ -6,32 +6,36 @@ using namespace std;
 
 // Точка
 class dot {
+private:
+    double x_;
+    double y_;
 public:
-    double x;
-    double y;
+    double x() {
+        return x_;
+    }
+
+    double y() {
+        return y_;
+    }
 
     dot(int x1 = 0, int y1 = 0) {
-        x = x1;
-        y = y1;
+        x_ = x1;
+        y_ = y1;
     }
 
     dot(dot &copy) {
-        x = copy.x;
-        y = copy.y;
+        x_ = copy.x_;
+        y_ = copy.y_;
     }
 
-    dot &operator=(const dot &copy) {
-        x = copy.x;
-        y = copy.y;
-        return *this;
-    }
+    dot &operator=(const dot &copy) = default;
 
     void print() const {
-        cout << x << " " << y << endl;
+        cout << x_ << " " << y_ << endl;
     }
 
     double distance(dot &another_dot) {
-        return sqrt(pow((x - another_dot.x), 2) + pow((y - another_dot.y), 2));
+        return sqrt(pow((x_ - another_dot.x_), 2) + pow((y_ - another_dot.y_), 2));
     }
 };
 
@@ -90,7 +94,7 @@ public:
         }
     }
 
-    closed_polyline(closed_polyline &copy) {
+    closed_polyline(closed_polyline &copy){
         amount_of_dots = copy.amount_of_dots;
         for (int i = 0; i < amount_of_dots; ++i) {
             dots[i] = copy.dots[i];
@@ -105,7 +109,7 @@ public:
         return *this;
     }
 
-    double perimeter() {
+    double perimeter(){
         double result = 0;
         for (int i = 0; i < amount_of_dots - 1; ++i) {
             result += dots[i].distance(dots[i + 1]);
@@ -147,11 +151,11 @@ public:
         double result = 0;
         double sum1 = 0, sum2 = 0;
         for (int i = 0; i < amount_of_dots - 1; i++) {
-            sum1 += dots[i].x * dots[i + 1].y;
-            sum2 += dots[i + 1].x * dots[i].y;
+            sum1 += dots[i].x() * dots[i + 1].y();
+            sum2 += dots[i + 1].x() * dots[i].y();
         }
-        sum1 += dots[amount_of_dots - 1].x * dots[0].y;
-        sum2 += dots[0].x * dots[amount_of_dots - 1].y;
+        sum1 += dots[amount_of_dots - 1].x() * dots[0].y();
+        sum2 += dots[0].x() * dots[amount_of_dots - 1].y();
         result = abs((sum1 - sum2)) / 2;
         return result;
     }
@@ -187,6 +191,7 @@ public:
     }
 };
 
+// Трапеция
 class trapezoid : public polygon {
 public:
     trapezoid() {
@@ -218,12 +223,39 @@ public:
 
 // Правильный многоугольник
 class regular_polygon : public polygon {
+public:
+    regular_polygon() {
+        amount_of_dots = 0;
+    }
+
+    regular_polygon(int amount, dot input_dots[]) {
+        amount_of_dots = amount;
+        for (int i = 0; i < amount; ++i) {
+            dots[i] = input_dots[i];
+        }
+    }
+
+    regular_polygon(regular_polygon &copy) {
+        amount_of_dots = copy.amount_of_dots;
+        for (int i = 0; i < amount_of_dots; ++i) {
+            dots[i] = copy.dots[i];
+        }
+    }
+
+    regular_polygon &operator=(const regular_polygon &copy) {
+        amount_of_dots = copy.amount_of_dots;
+        for (int i = 0; i < amount_of_dots; ++i) {
+            dots[i] = copy.dots[i];
+        }
+        return *this;
+    }
 };
 
 // Полином
 class polynomial {
 private:
-    vector<int> coefficients;
+    vector<double> coefficients;
+
     static string indeterminate(unsigned long power) {
         switch (power) {
             case (0):
@@ -234,7 +266,8 @@ private:
                 return "x^" + to_string(power);
         }
     }
-    static char sign(int number) {
+
+    static char sign(double number) {
         if (number < 0) return '-';
         return '+';
     }
@@ -273,7 +306,7 @@ public:
                 coefficients[i] += pol.coefficients[i];
             }
         }
-        while (coefficients[coefficients.size() - 1] == 0){
+        while (coefficients[coefficients.size() - 1] == 0) {
             coefficients.pop_back();
         }
         return *this;
@@ -287,8 +320,15 @@ public:
                 coefficients[i] += pol.coefficients[i];
             }
         }
-        while (coefficients[coefficients.size() -1] == 0){
+        while (coefficients[coefficients.size() - 1] == 0) {
             coefficients.pop_back();
+        }
+        return *this;
+    }
+
+    polynomial &operator-() {
+        for (double &coefficient: coefficients) {
+            coefficient = -coefficient;
         }
         return *this;
     }
@@ -301,7 +341,7 @@ public:
                 coefficients[i] -= pol.coefficients[i];
             }
         }
-        while (coefficients[coefficients.size() - 1] == 0){
+        while (coefficients[coefficients.size() - 1] == 0) {
             coefficients.pop_back();
         }
         return *this;
@@ -315,19 +355,116 @@ public:
                 coefficients[i] -= pol.coefficients[i];
             }
         }
-        while (coefficients[coefficients.size() - 1] == 0){
+        while (coefficients[coefficients.size() - 1] == 0) {
             coefficients.pop_back();
         }
         return *this;
     }
 
-    void print() {
-        cout << coefficients[coefficients.size() - 1] << indeterminate(coefficients.size() - 1);
-        for (int i = (int) coefficients.size() - 2; i >= 0; --i) {
-            if (coefficients[i] != 0) {
-                cout << sign(coefficients[i]) << abs(coefficients[i]) << indeterminate(i);
+    polynomial &operator*(int number) {
+        for (double &coefficient: coefficients) {
+            coefficient *= number;
+        }
+        return *this;
+    };
+
+    polynomial &operator*=(int number) {
+        for (double &coefficient: coefficients) {
+            coefficient *= number;
+        }
+        return *this;
+    };
+
+    polynomial &operator/(int number) {
+        for (double &coefficient: coefficients) {
+            coefficient *= number;
+        }
+        return *this;
+    };
+
+    polynomial &operator/=(int number) {
+        for (double &coefficient: coefficients) {
+            coefficient *= number;
+        }
+        return *this;
+    };
+
+    friend ostream &operator<<(ostream &os, polynomial &out) {
+        if (out.coefficients[out.coefficients.size() - 1] < 0) {
+            os << "- " << abs(out.coefficients[out.coefficients.size() - 1])
+               << indeterminate(out.coefficients.size() - 1);
+        } else {
+            os << abs(out.coefficients[out.coefficients.size() - 1])
+               << indeterminate(out.coefficients.size() - 1);
+        }
+
+        for (int i = (int) out.coefficients.size() - 2; i >= 0; --i) {
+            if (out.coefficients[i] != 0) {
+                os << " " << sign(out.coefficients[i]) << " " << abs(out.coefficients[i]) << indeterminate(i);
             }
         }
+        return os;
+    }
+
+    // При чтении с консоли полином обязательно должен заканчиваться каким-либо коэффициентом 0 степени.
+    friend istream &operator>>(istream &is, polynomial &in) {
+        string element;
+        in.coefficients.resize(0);
+        bool positive = true;
+        bool first = true;
+        while (is >> element) {
+            if (element == "-") {
+                positive = false;
+                continue;
+            }
+            if (element == "+") {
+                positive = true;
+                continue;
+            }
+            int coefficient = 0;
+            int power = 0;
+            int i = 0;
+            while ((element[i] != 'x') and (element[i] != '\n')) {
+                i++;
+                if (element.size() < i + 1) {
+                    element += '\n';
+                    break;
+                }
+            }
+            if (i == 0) {
+                coefficient = 1;
+            } else {
+                for (int j = 0; j < i; j++) {
+                    coefficient *= 10;
+                    coefficient += element[j] - '0';
+                }
+            }
+            if (element[i] != '\n') {
+                if (element[i + 1] == '^') {
+                    for (int j = i + 2; j < element.size(); ++j) {
+                        power *= 10;
+                        power += element[j] - '0';
+                    }
+                } else {
+                    power = 1;
+                }
+            }
+            int sign = 1;
+            if (!positive) sign = -1;
+            if (first) {
+                in.coefficients.resize(power + 1);
+                first = false;
+            }
+            in.coefficients[power] = sign * coefficient;
+            if ((element[i] == '\n') or (power == 0)) {
+                break;
+            }
+        }
+        return is;
+    }
+
+    double &operator[](const int &index) {
+        return coefficients[index];
     }
 };
 
@@ -345,7 +482,7 @@ int main() {
     d[2] = {1, 1};
     d[3] = {1, 0};
     polyline pl1 = {3, d}, pl2;
-    pl2 = pl1;
+    pl1 = pl2;
     cout << pl2.perimeter() << endl;
     closed_polyline cpl1 = {3, d}, cpl2;
     cpl2 = cpl1;
@@ -354,7 +491,7 @@ int main() {
     cout << pol1.perimeter() << " " << pol1.area() << endl;
     triangle t1(d);
     cout << t1.area() << endl;
-    regular_polygon rp1;
+    regular_polygon rp1 = {4, d};
     vector<int> vec, vec2;
     vec.push_back(1);
     vec.push_back(-2);
@@ -362,13 +499,17 @@ int main() {
     vec2.push_back(3);
     vec2.push_back(-5);
     polynomial poly1(vec), poly2(vec2);
-    poly1.print();
+    cout << poly1;
     poly2 += poly1;
-    cout << endl;
-    poly2.print();
-    poly2 -= poly1;
-    cout << endl;
-    poly2.print();
+    cout << endl << poly2;
+    poly2 = -poly1;
+    cout << endl << poly2;
     cout << endl << (poly2 == poly1);
+    cout << endl << poly2[2] << endl;
+    cin >> poly2;
+    cout << poly2 << endl;
+    polynomial pol3;
+    cin >> pol3;
+    cout << pol3[2];
     return 0;
 }
