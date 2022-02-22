@@ -1,11 +1,19 @@
 #include <iostream>
 #include <vector>
 #include <cmath>
+#include <cstdlib>
+
+
+// Выходы программы:
+// 4 - Трапеция не имеет параллельных сторон
+// 3 - Многоугольник имеет пересекающиеся отрезки
+// 2 - Дано недостаточно точек
+// 1 - Правильный многоугольник задан неправильно
 
 using namespace std;
 
 // Точка
-class dot {
+class point {
 private:
     double x_;
     double y_;
@@ -18,23 +26,25 @@ public:
         return y_;
     }
 
-    dot(int x1 = 0, int y1 = 0) {
+    point(int x1 = 0, int y1 = 0) {
         x_ = x1;
         y_ = y1;
     }
 
-    dot(dot &copy) {
+    point(point &copy) {
         x_ = copy.x_;
         y_ = copy.y_;
     }
 
-    dot &operator=(const dot &copy) = default;
+    point &operator=(const point &copy) = default;
+
+    ~point() = default;
 
     void print() const {
         cout << x_ << " " << y_ << endl;
     }
 
-    double distance(dot &another_dot) {
+    double distance(point &another_dot) {
         return sqrt(pow((x_ - another_dot.x_), 2) + pow((y_ - another_dot.y_), 2));
     }
 };
@@ -43,13 +53,13 @@ public:
 class polyline {
 protected:
     int amount_of_dots;
-    dot dots[1024];
+    point dots[1024];
 public:
     polyline() {
         amount_of_dots = 0;
     }
 
-    polyline(int amount, dot input_dots[]) {
+    polyline(int amount, point input_dots[]) {
         amount_of_dots = amount;
         for (int i = 0; i < amount; ++i) {
             dots[i] = input_dots[i];
@@ -87,14 +97,14 @@ public:
         amount_of_dots = 0;
     }
 
-    closed_polyline(int amount, dot input_dots[]) {
+    closed_polyline(int amount, point input_dots[]) {
         amount_of_dots = amount;
         for (int i = 0; i < amount; ++i) {
             dots[i] = input_dots[i];
         }
     }
 
-    closed_polyline(closed_polyline &copy){
+    closed_polyline(closed_polyline &copy) {
         amount_of_dots = copy.amount_of_dots;
         for (int i = 0; i < amount_of_dots; ++i) {
             dots[i] = copy.dots[i];
@@ -109,7 +119,7 @@ public:
         return *this;
     }
 
-    double perimeter(){
+    double perimeter() {
         double result = 0;
         for (int i = 0; i < amount_of_dots - 1; ++i) {
             result += dots[i].distance(dots[i + 1]);
@@ -120,15 +130,53 @@ public:
 
 // Многоугольник
 class polygon : public closed_polyline {
+private:
+    static bool is_crossed(point a, point b, point c, point d) {
+        double common = (b.x() - a.x()) * (d.y() - c.y()) - (b.y() - a.y()) * (d.x() - c.x());
+        if (common == 0) return false;
+
+        double rH = (a.y() - c.y()) * (d.x() - c.x()) - (a.x() - c.x()) * (d.y() - c.y());
+        double sH = (a.y() - c.y()) * (b.x() - a.x()) - (a.x() - c.x()) * (b.y() - a.y());
+
+        double r = rH / common;
+        double s = sH / common;
+
+        if (r >= 0 && r <= 1 && s >= 0 && s <= 1) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+protected:
+    bool are_crossed() {
+        for (int i = 1; i < amount_of_dots - 1; i++) {
+            for (int j = 0; j < i; j++) {
+                if ((j + 1 != i) && is_crossed(dots[j], dots[j + 1], dots[i], dots[i + 1])) {
+                    return true;
+                }
+            }
+        }
+        for (int i = 1; i < amount_of_dots - 2; i++) {
+            if (is_crossed(dots[amount_of_dots - 1], dots[0], dots[i], dots[i + 1])) {
+                return true;
+            }
+        }
+        return false;
+    }
+
 public:
     polygon() {
         amount_of_dots = 0;
     }
 
-    polygon(int amount, dot input_dots[]) {
+    polygon(int amount, point input_dots[]) {
         amount_of_dots = amount;
         for (int i = 0; i < amount; ++i) {
             dots[i] = input_dots[i];
+        }
+        if (are_crossed()) {
+            exit(3);
         }
     }
 
@@ -168,7 +216,7 @@ public:
         amount_of_dots = 0;
     }
 
-    triangle(dot input_dots[]) {
+    triangle(point input_dots[]) {
         amount_of_dots = 3;
         dots[0] = input_dots[0];
         dots[1] = input_dots[1];
@@ -193,15 +241,39 @@ public:
 
 // Трапеция
 class trapezoid : public polygon {
+protected:
+    static bool are_parallel(point a1, point a2, point b1, point b2) {
+        double ax = a2.x() - a1.x();
+        double ay = a2.y() - a1.y();
+        double bx = b2.x() - b1.x();
+        double by = b2.y() - b1.y();
+
+        if (ay == 0) ay = 1;
+        if (by == 0) by = 1;
+
+        double a = ax / ay;
+        double b = bx / by;
+
+        if (a == b)
+            return true;
+        return false;
+    }
+
 public:
     trapezoid() {
         amount_of_dots = 0;
     }
 
-    trapezoid(dot input_dots[]) {
+    trapezoid(point input_dots[]) {
         amount_of_dots = 4;
         for (int i = 0; i < 4; ++i) {
             dots[i] = input_dots[i];
+        }
+        if (are_crossed()) {
+            exit(3);
+        }
+        if (!are_parallel(dots[0], dots[1], dots[2], dots[3]) && !are_parallel(dots[1], dots[2], dots[0], dots[3])) {
+            exit(4);
         }
     }
 
@@ -228,10 +300,22 @@ public:
         amount_of_dots = 0;
     }
 
-    regular_polygon(int amount, dot input_dots[]) {
+    regular_polygon(int amount, point input_dots[]) {
         amount_of_dots = amount;
+        if (amount_of_dots < 3) {
+            exit(2);
+        }
         for (int i = 0; i < amount; ++i) {
             dots[i] = input_dots[i];
+        }
+        double side = dots[0].distance(dots[amount_of_dots - 1]);
+        for (int i = 0; i < amount_of_dots - 1; ++i) {
+            if (dots[i].distance(dots[i + 1]) != side) {
+                exit(1);
+            }
+        }
+        if (are_crossed()) {
+            exit(3);
         }
     }
 
@@ -469,21 +553,20 @@ public:
 };
 
 int main() {
-    dot d1, d2 = {1, 2};
+    point d1, d2 = {1, 2};
     d1.print();
     d2.print();
     d1 = d2;
     d2 = {0, 0};
     d1.print();
     d2.print();
-    dot d[4];
+    point d[4];
     d[0] = {0, 0};
     d[1] = {0, 1};
     d[2] = {1, 1};
     d[3] = {1, 0};
-    polyline pl1 = {3, d}, pl2;
-    pl1 = pl2;
-    cout << pl2.perimeter() << endl;
+    polyline pl1 = {4, d};
+    cout << "polyline " << pl1.perimeter() << endl;
     closed_polyline cpl1 = {3, d}, cpl2;
     cpl2 = cpl1;
     cout << cpl2.perimeter() << endl;
